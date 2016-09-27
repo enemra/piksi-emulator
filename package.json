@@ -1,0 +1,23 @@
+{
+  "name": "piksi-emulator",
+  "version": "1.0.0",
+  "description": "A really dumb Piksi emulator that outputs position solutions at 1HZ (hardcoded) and echos observations written to it. This is for testing external streams of corrections and that they're getting to a piksi correctly.",
+  "main": "lib/index.js",
+  "scripts": {
+    "test": "mocha -R spec"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+ssh://git@github.com/swift-nav/piksi-emulator.git"
+  },
+  "keywords": [
+    "piksi",
+    "emulator"
+  ],
+  "author": "Joshua Gross <joshua.gross@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/swift-nav/piksi-emulator/issues"
+  },
+  "homepage": "https://github.com/swift-nav/piksi-emulator#readme"
+}
