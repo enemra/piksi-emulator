@@ -1,6 +1,6 @@
 {
   "name": "piksi-emulator",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "A really dumb Piksi emulator that outputs position solutions at 1HZ (hardcoded) and echos observations written to it. This is for testing external streams of corrections and that they're getting to a piksi correctly.",
   "main": "lib/index.js",
   "scripts": {

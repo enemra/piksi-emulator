@@ -14,7 +14,7 @@ import { PassThrough } from 'stream';
 import { dispatch } from 'libsbp';
 import constructMsg from 'libsbp/javascript/sbp/construct';
 import { sbpIdTable } from 'libsbp/javascript/sbp/msg';
-import { MsgPosLlh, MsgPosEcef } from 'libsbp/javascript/sbp/navigation';
+import { MsgPosLlh, MsgPosEcef, MsgGpsTime } from 'libsbp/javascript/sbp/navigation';
 
 const defaultEcef = {
   x: -2706105.162741557,
@@ -26,7 +26,7 @@ const defaultLlh = {
   lon: -122.41772914435545,
   height: 60
 };
-const senderId = 0x42;
+const defaultSenderId = 0x42;
 
 // Unix timestamp of the GPS epoch 1980-01-06 00:00:00 UTC
 const gpsEpochSeconds = 315964800;
@@ -55,7 +55,7 @@ function gpsTimestampToWnTow (gpsTimestamp) {
  * @param {number} hz - Hertz rate to write solutions out at
  * @param {number} senderId - senderId of SBP messages
  */
-export default function piksiEmulator (port = 7777, ecef = defaultEcef, llh = defaultLlh, hz = 1, senderId = senderId) {
+export default function piksiEmulator (port = 77777, ecef = defaultEcef, llh = defaultLlh, hz = 1, senderId = defaultSenderId) {
   assert(typeof port === 'number', 'port must be a number');
   assert(ecef && llh, 'ecef and llh must both be provided!');
   assert((ecef === defaultEcef && llh === defaultLlh) || (ecef !== defaultEcef && llh !== defaultLlh),
@@ -71,7 +71,7 @@ export default function piksiEmulator (port = 7777, ecef = defaultEcef, llh = de
 
   const outstream = new PassThrough();
 
-  setInterval(() => {
+  const writeInterval = setInterval(() => {
     const { tow, wn } = gpsTimestampToWnTow(Date.now() / 1000);
 
     const ecefFields = Object.assign({}, ecef, {
@@ -89,9 +89,18 @@ export default function piksiEmulator (port = 7777, ecef = defaultEcef, llh = de
       tow
     });
 
+    const timeFields = {
+      wn,
+      tow,
+      ns: 0,
+      flags: 0
+    };
+
+    const timeBuf = constructMsg(MsgGpsTime, timeFields, senderId).toBuffer();
     const ecefBuf = constructMsg(MsgPosEcef, ecefFields, senderId).toBuffer();
     const llhBuf = constructMsg(MsgPosLlh, llhFields, senderId).toBuffer();
 
+    outstream.write(timeBuf);
     outstream.write(ecefBuf);
     outstream.write(llhBuf);
   }, 1000 / hz);
@@ -102,10 +111,9 @@ export default function piksiEmulator (port = 7777, ecef = defaultEcef, llh = de
     dispatch(req, (err, framedMsg) => {
       // Virtual Piksi is receiving written obs - if sender ID is nonzero,
       // echo them back to the stream.
-      console.log(framedMsg);
       if (framedMsg.messageType === 'MSG_OBS' && framedMsg.senderId !== 0) {
-        const MsgConstructor = sbpIdTable[framedMsg2.sbp.msg_type];
-        const buf = constructMsg(MsgConstructor, framedMsg2.fields, senderId).toBuffer();
+        const MsgConstructor = sbpIdTable[framedMsg.sbp.msg_type];
+        const buf = constructMsg(MsgConstructor, framedMsg.fields, framedMsg.sbp.sender).toBuffer();
         outstream.write(buf);
       }
     });
@@ -113,5 +121,7 @@ export default function piksiEmulator (port = 7777, ecef = defaultEcef, llh = de
     res.on('end', () => outstream.unpipe(res));
   };
 
-  return http.createServer(responder).listen(port);
+  const server = http.createServer(responder).listen(port);
+  server.on('close', () => clearInterval(writeInterval));
+  return server;
 }
