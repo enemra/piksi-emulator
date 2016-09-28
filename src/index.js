@@ -14,6 +14,7 @@ import { PassThrough } from 'stream';
 import { dispatch } from 'libsbp';
 import constructMsg from 'libsbp/javascript/sbp/construct';
 import { sbpIdTable } from 'libsbp/javascript/sbp/msg';
+import { currentGpsWnTow } from 'gpstime';
 import { MsgPosLlh, MsgPosEcef, MsgGpsTime } from 'libsbp/javascript/sbp/navigation';
 
 const defaultEcef = {
@@ -27,24 +28,6 @@ const defaultLlh = {
   height: 60
 };
 const defaultSenderId = 0x42;
-
-// Unix timestamp of the GPS epoch 1980-01-06 00:00:00 UTC
-const gpsEpochSeconds = 315964800;
-const weekSeconds = (60 * 60 * 24 * 7);
-
-/**
- * Convert GPS moment timestamp (in GPS time, without leap seconds) to { wn, tow }.
- *
- * @param {moment} gpsTimestamp - A `moment` object representing a GPS timestamp,
- *   without leap-seconds.
- * @return {object} { wn, tow }
- */
-function gpsTimestampToWnTow (gpsTimestamp) {
-  const gpsTimeMs = gpsTimestamp - gpsEpochSeconds;
-  const wn = Math.floor(gpsTimeMs / weekSeconds);
-  const tow = gpsTimeMs - (wn * weekSeconds);
-  return { wn, tow };
-}
 
 /**
  * Open a piksi emulator on a port. Output given position solutions at the given rate.
@@ -91,7 +74,7 @@ export default function piksiEmulator (port = 77777, ecef = defaultEcef, llh = d
   };
 
   const writeInterval = setInterval(() => {
-    const { tow, wn } = gpsTimestampToWnTow(Date.now() / 1000);
+    const { tow, wn } = currentGpsWnTow();
 
     const ecefFields = Object.assign({}, jitterEcef(ecef), {
       n_sats:9,

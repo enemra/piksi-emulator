@@ -7,7 +7,7 @@
     "test": "mocha -R spec",
     "build": "babel src -d lib"
   },
-  "cli": {
+  "bin": {
     "piksi-emulator": "cli/index.js"
   },
   "repository": {
@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "commander": "^2.9.0",
+    "gpstime": "^1.0.1",
     "libsbp": "^1.2.2"
   }
 }

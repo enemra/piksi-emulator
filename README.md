@@ -3,7 +3,7 @@ A naive Piksi emulator that outputs position solutions at 1HZ (hardcoded) and ec
 
 This is for testing external streams of corrections and that they're getting to a piksi correctly. A real piksi device echoes back observations that are written to it; this utility is helpful for verifying that those parts of your application are functioning correctly, while removing serial communications and hardware from testing.
 
-## Install
+# Install
 
 You can use the piksi emulator programatically or via the CLI.
 
@@ -19,7 +19,7 @@ Or to save it to a project:
 npm install --save piksi-emulator
 ```
 
-## CLI usage
+# CLI usage
 
 ```
   Usage: piksi-emulator [options]
@@ -40,7 +40,7 @@ npm install --save piksi-emulator
 You can run `piksi-emulator` with all the defaults and it will start a virtual device on
 HTTP port `7777`.
 
-## Programmatic usage
+# Programmatic usage
 
 ```javascript
 const defaultEcef = ;
