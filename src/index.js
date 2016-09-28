@@ -54,8 +54,10 @@ function gpsTimestampToWnTow (gpsTimestamp) {
  * @param {Object} llh - LLH position to use { lat, lon, height }, or default (Swift's SF office location)
  * @param {number} hz - Hertz rate to write solutions out at
  * @param {number} senderId - senderId of SBP messages
+ * @param {number} jitter - a factor used to slightly randomize otherwise-static positions. If you want streams
+ *   of dynamic positions in SBP, check out `sbp-synthetic-stream`.
  */
-export default function piksiEmulator (port = 77777, ecef = defaultEcef, llh = defaultLlh, hz = 1, senderId = defaultSenderId) {
+export default function piksiEmulator (port = 77777, ecef = defaultEcef, llh = defaultLlh, hz = 1, senderId = defaultSenderId, jitter = 0) {
   assert(typeof port === 'number', 'port must be a number');
   assert(ecef && llh, 'ecef and llh must both be provided!');
   assert((ecef === defaultEcef && llh === defaultLlh) || (ecef !== defaultEcef && llh !== defaultLlh),
@@ -68,20 +70,37 @@ export default function piksiEmulator (port = 77777, ecef = defaultEcef, llh = d
   assert(typeof llh.height === 'number', 'must provide llh height value as number');
   assert(typeof hz === 'number', 'must provide hz value as number');
   assert(hz < 1000, 'hz cannot be greater than 1000');
+  assert(typeof jitter === 'number', 'must provide jitter value as number');
 
   const outstream = new PassThrough();
+
+  const jitterEcef = ({ x, y, z }) => {
+    return {
+      x: x + (Math.random() * 1000 * jitter),
+      y: y + (Math.random() * 1000 * jitter),
+      z: z + (Math.random() * 1000 * jitter)
+    };
+  };
+
+  const jitterLlh = ({ lat, lon, height }) => {
+    return {
+      lat: lat + (Math.random() * jitter),
+      lon: lon + (Math.random() * jitter),
+      height: height + (Math.random() * 10 * jitter)
+    };
+  };
 
   const writeInterval = setInterval(() => {
     const { tow, wn } = gpsTimestampToWnTow(Date.now() / 1000);
 
-    const ecefFields = Object.assign({}, ecef, {
+    const ecefFields = Object.assign({}, jitterEcef(ecef), {
       n_sats:9,
       accuracy: 0,
       flags: 0,
       tow
     });
 
-    const llhFields = Object.assign({}, llh, {
+    const llhFields = Object.assign({}, jitterLlh(llh), {
       n_sats:9,
       v_accuracy: 0,
       h_accuracy: 0,

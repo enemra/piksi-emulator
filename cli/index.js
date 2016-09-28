@@ -27,6 +27,7 @@ commander.version(pkg.version)
   .option('--lat <lat>', 'LLH lat position (must also provide lon, height or none)')
   .option('--lon <lon>', 'LLH lon position (must also provide lat, height or none)')
   .option('--height <height>', 'LLH height (must also provide lat, lon or none)')
+  .option('--jitter <n>', 'A jitter factor to slightly randomize the positions produced', parseFloat)
   .parse(process.argv);
 
 var port = commander.port || undefined;
@@ -38,6 +39,7 @@ var z = commander.z || undefined;
 var lat = commander.lat || undefined;
 var lon = commander.lon || undefined;
 var height = commander.height || undefined;
+var jitter = commander.jitter || undefined;
 
 if ((x || y || z) && !(x && y && z)) {
   throw new Error('If ECEF x, y, or z is provided, you must provide all three.');
@@ -50,4 +52,4 @@ if ((lat || lon || height) && !(lat && lon && height)) {
 var ecef = (x ? { x: x, y: y, z: z } : undefined);
 var llh = (lat ? { lat: lat, lon: lon, height: height } : undefined);
 
-emulator(port, ecef, llh, hz, sender);
+emulator(port, ecef, llh, hz, sender, jitter);
